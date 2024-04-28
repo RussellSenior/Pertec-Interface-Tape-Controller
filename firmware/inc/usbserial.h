@@ -12,4 +12,9 @@ int USCharReady( void); 	// test if character ready
 void USPuts( char *What);	// put string
 int USWriteBlock( uint8_t *What, int Count);	// write a block of data
 
+//  Utility usb defs.
+
+bool usb_get_connected(void);
+void usb_disconnect(void);
+
 #endif

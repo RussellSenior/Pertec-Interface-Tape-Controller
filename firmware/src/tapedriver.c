@@ -657,9 +657,18 @@ void IssueTapeCommand( uint16_t What)
   { // need to set high order  
 
     gpio_set( PCTRL_GPIO, PCTRL_ENA);	// float the command register
+
+//	N.B.  By default, we're using the BSRR here.  Not all ARM chips
+//	have this; hence the conditional.  In our case, a single 32-bit
+//	store to the BSRR clears, then sets bits in the same cycle.
+
+#ifdef USE_OLD_BIT_SET_RESET
     gpio_set( PCMD_GPIO, PCMD_BIT);	// set all bits to one
     if ( cmd2)
       gpio_clear( PCMD_GPIO, cmd2);	// assert the ones
+#else
+    G_OUT( PCMD, ~cmd2);
+#endif
     gpio_clear( PCTRL_GPIO, PCTRL_CSEL0);
     Delay(1);
     gpio_set( PCTRL_GPIO, PCTRL_CSEL0);	// latch it in

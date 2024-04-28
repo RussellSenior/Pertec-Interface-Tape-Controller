@@ -17,10 +17,13 @@
 #include "gpiodef.h"
 #include "globals.h"
 #include "miscsubs.h"
+#include "ebcdic.h"
 
 static void SetupGPIO( uint32_t Gpio, uint16_t Pin, 
                       uint8_t Mode, uint8_t Pull, int Initial);
 
+static bool
+  DelayIsSet = false;		
 
 //  InitGPIO - Initialize GPIOs.
 //  ----------------------------
@@ -81,14 +84,16 @@ static void SetupGPIO( uint32_t Gpio, uint16_t Pin,
 //  ShowBuffer - Display buffer contents.
 //  -------------------------------------
 //
+//	Mote that the third argument, if true, forces an EBCDIC display.
 //
 
-void ShowBuffer( uint8_t *Buf, int Buflen)
+void ShowBuffer( uint8_t *Buf, int Buflen, bool Ebcdic)
 {
 
   int
     base,
     i, j;
+    
 
   for ( i = 0; i < Buflen/16; i++)
   {
@@ -98,7 +103,13 @@ void ShowBuffer( uint8_t *Buf, int Buflen)
       Uprintf( "%02x ", Buf[j+base]);
     Uprintf("  ");
     for ( j = 0; j < 16; j++)
-      Uprintf( "%c", isprint( Buf[j+base]) ? Buf[j+base] : '.');
+    {
+      int ch = Buf[j+base];
+      
+      if ( Ebcdic)
+        ch = E2A( ch);
+      Uprintf( "%c", isprint( ch) ? ch : '.');
+    } // determine how to print
     Uprintf( "\n");    
   } // for each line
 
@@ -107,33 +118,41 @@ void ShowBuffer( uint8_t *Buf, int Buflen)
 //  Delay Setup.
 //  ------------
 //
-//	Uses TIM6to provide variable delays.
+//      Uses TIM6 to provide variable delays.
 //
 
 void DelaySetup (void)
 {
 
-// Set up a microsecond free running timer 
+  DelayIsSet = true;
 
+// Set up a microsecond free running timer 
   rcc_periph_clock_enable(RCC_TIM6);
-  timer_set_prescaler(TIM6, rcc_apb1_frequency / 4000000 - 1);
+
+//  We want to prescale so that we tick by 1 usec; 
+
+  timer_set_prescaler(TIM6, 
+    rcc_get_timer_clk_freq(TIM6)/ 1000000 - 1);
+
   timer_set_period(TIM6, 0xffff);
   timer_one_shot_mode(TIM6);
 } // DelaySetup
 
-//  Delay for a specific number of half-microseconds.
-//  -------------------------------------------------
+//  Delay for a specific number of microseconds.
+//  --------------------------------------------
 //
 
 void Delay(uint16_t Howmuch)
 {
 
+  if (!DelayIsSet)
+    DelaySetup();               // make sure to set things up
+
   TIM_ARR(TIM6) = Howmuch;
   TIM_EGR(TIM6) = TIM_EGR_UG;
-  TIM_CR1(TIM6) |= TIM_CR1_CEN;	  //timer_enable_counter(TIM6)
+  TIM_CR1(TIM6) |= TIM_CR1_CEN;   //  timer_enable_counter(TIM6)
   while (TIM_CR1(TIM6) & TIM_CR1_CEN); // stall
 } // Delay
-
 
 //  Sys_tick_handler - called every millisecond.
 //  --------------------------------------------

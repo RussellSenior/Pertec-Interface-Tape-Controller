@@ -284,7 +284,6 @@ XERR_CODE ReceiveYmodem( void)
     currChar,			// current character
     dPos,			// position in buffer
     blockLength;		// block length
-
   
   typedef enum   
   {
@@ -305,6 +304,7 @@ XERR_CODE ReceiveYmodem( void)
   rerror = XERR_SUCCESS;
   bytesWritten = 0;			// initialize counters
   nextBlock = 0;			// keep count
+  blockLength = 0;			// just to keep gcc happy
   
 //	First, flush any characters lying around.
 

@@ -19,6 +19,8 @@
 
 static void Numout( unsigned Num, int Dig, int Radix, int bwz);
 
+static bool DBinitialized = false;
+
 
 //  Initialize UART
 //  ---------------
@@ -29,6 +31,9 @@ static void Numout( unsigned Num, int Dig, int Radix, int bwz);
 
 int DBinit( void)
 {
+ 
+  if (DBinitialized)
+    return;				  // been here already 
  
 // Enable GPIOD clock for  UART1 pins. 
 
@@ -60,6 +65,8 @@ int DBinit( void)
   usart_set_flow_control(UART_PORT, USART_FLOWCONTROL_NONE);
   usart_enable( UART_PORT);
 
+  DBInitialized = true;
+  
   return 0;
 } // DBinit
 

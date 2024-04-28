@@ -8,8 +8,10 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 
+
 #include "license.h"
 
+#include "ff.h"
 #include "comm.h"
 #include "rtcsubs.h"
 #include "gpiodef.h"
@@ -70,14 +72,18 @@ static void Init( void)
   
  rcc_clock_setup_pll(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_168MHZ]);
 
+ DBinit();				// initialize debugger
+
 //  Set up the Systick timer for 1 msec tick.
 
   Milliseconds = 0;                     // start off ticker
   InitGPIO();				// set up primary GPIOs
-  InitACM(115200);			// initialize USB comm
+  SD_GPIO_Init();			// initialize the SD interface
   SetupSysTick();			// get the milliscond timer going
   DelaySetup();				// set up delay timer
-  
+
+  InitACM(115200);			// initialize USB comm
+
 //  Wait for console check-in.  
 
   Ugets( (char *) Buffer, 256);         // just clear out any input garbage
@@ -93,7 +99,8 @@ static void Init( void)
       break;
   } // wait for a go
     
-  Uprintf("\nTape Utility version " VERSION " ready...\n");
+  Uprintf("\nTape Utility version " VERSION " ready...\n"
+          "Enter \"HELP\" for a command description\n");
 
 //  Get the real-time clock going.
 
@@ -105,21 +112,17 @@ static void Init( void)
 
   SD_Init();				// initialize SDcard.
   MountSD( 0);				// do it twice
-  
-  Uprintf( "\nSDIO initialized.\n");
+  Uprintf( "SDIO initialized.\n");
   
 //  Initialize the tape interface.
 
   TapeInit();  
   
-  Uprintf( "\nTape I/O initialized.\n"); 
+  Uprintf( "Tape I/O initialized.\n"); 
 
 //  Initialize the UART if serial debugging..
 
-#ifdef SERIAL_DEBUG
-  DBinit();		// initialize debug output
-  DBprintf( "\nDebug I/O ready.\n");
-#endif
+  DBprintf( "Debug I/O ready.\n");
 
   return;
       

@@ -8,14 +8,11 @@
 #include "comm.h"
 #include "sdiosubs.h"
 #include "sdcard.h"
+#include "globals.h"
 
-//*	Routines for STM32F4 SDIO Support
-//	----------------------------------
-
-
-//  These two macros help avoid a mess of nested "if" statements.  
-//  Basically, they define a once-through sequence of code that 
-//  can be exited with "break" statements.
+//  These two help avoid a mess of nested "if" statements.  Basically, they
+//  define a once-through sequence of code that can be exited with "break"
+//  statements.
 
 #define BEGIN do
 #define END while(false);
@@ -110,13 +107,15 @@ static enum
   XFER_WRITING_MULTI        // write multiple block
 } TransferPending;
 
+
 //  Prototypes.
 
 static SD_ERROR TestSDStatus( void);
-static void SD_GPIO_Init(void);
+//  void SD_GPIO_Init(void);
 static int SD_Command( uint8_t Command, uint32_t Arg);
 static void SD_BeginTransfer(void *Buf, uint32_t Count, DMA_DIRECTION Dir);
 static void SD_StopMultiWrite( void); 
+static void SD_Delay(int Mills);
 
 //  TestSDStatus - Preliminary check for SD Status.
 //  -----------------------------------------------
@@ -149,7 +148,7 @@ static SD_ERROR TestSDStatus( void)
 //  We start out with a 400KHz clock and 1-bit mode.
 //
 
-static void SD_GPIO_Init(void)
+void SD_GPIO_Init(void)
 {
 
 //  Enable clocks for SDIO and DMA2
@@ -157,10 +156,14 @@ static void SD_GPIO_Init(void)
   rcc_periph_clock_enable( RCC_DMA2);
   rcc_periph_clock_enable( RCC_SDIO);
   
+//  rcc_peripheral_enable_clock (&RCC_APB2ENR, RCC_APB2ENR_SDIOEN);
+//  rcc_peripheral_enable_clock (&RCC_AHB1ENR, RCC_AHB1ENR_DMA2EN);
+
 //  Setup GPIO pins.  Note that PC8-PC11 are DIO 0-3, PC12 = SD clock
 //  PD2 is command.
 
   rcc_periph_clock_enable( RCC_GPIOC);
+  rcc_periph_clock_enable( RCC_GPIOD);
 
   gpio_set_output_options (GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, GPIO12);
   gpio_set_output_options (GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ,
@@ -279,7 +282,9 @@ static int SD_Command( uint8_t Command, uint32_t Arg)
   else if (tmp & SDIO_STA_CTIMEOUT)
     error = SDIO_ERR_CTIMEOUT;
   else
+  {
     error = SDIO_ERR_UNKNOWN;
+  }
   return error;
 } // SD_Command
 
@@ -348,7 +353,10 @@ SD_ERROR SD_Init(void)
         break;                 // we expect a bad command CRC error
       
       if ( !(SDIO_RESP1 & SD_OCR_READY) )   // bit 31 is set low if not ready
+      {
+        SD_Delay(100);		// delay 100 msec and 
         continue;               // keep trying
+      }
       else
       {
         if ( SDIO_RESP1 & SD_OCR_HCS)       // check for high capacity
@@ -721,6 +729,11 @@ static void SD_StopMultiWrite( void)
 // Issue CMD12 - STOP TRANSMISSION.  
 
   SD_Command( SD_CMD_STOP_TRANS, 0);
+//  response = SDIO_RESP1;	// get R1b response
+
+//  Discard the untransferred buffer
+
+//  while (!((response >> 8) & SD_R1_IDLE) ) 
   while (!((SDIO_RESP1 >> 8) & SD_R1_IDLE) ) 
   { // wait for things to settle down.
 
@@ -730,7 +743,25 @@ static void SD_StopMultiWrite( void)
   }  // Wait for a response
 } // SD_StopMultiWrite
 
-//**	SD and DMA Interrupt Servicing.
+//*      SD_Delay - Delay a specified number of milliseconds.
+//      -----------------------------------------------------
+//
+//	Uses the system millisecond counter.
+//
+
+static void SD_Delay( int What)
+{
+
+  uint32_t now;
+  
+  now = Milliseconds;
+  while (now == Milliseconds) {};       // wait for the end of the tick
+  do {} while( Milliseconds < (now+What));
+  return;
+
+} // SD_Delay
+
+//*	SD and DMA Interrupt Servicing.
 //	===============================
 
 
@@ -840,3 +871,4 @@ void sdio_isr	(void)
 {
   SD_ServiceSDIOInterrupt();
 } // sdio_isr
+

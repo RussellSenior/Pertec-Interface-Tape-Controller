@@ -70,13 +70,14 @@
 // Data register--bidirectional; default to input.
 
 #define PDATA_GPIO	GPIOE		// Data register
+#define PDATA_GPIO_BSRR GPIOE_BSRR
 #define PDATA_BIT	0xff		// 8 bits
 #define PDATA_INIT	_IN_NONE	// set to input initially
 
 // Master control register--active low.
 
 #define PCTRL_GPIO	GPIOD		// Pertec control register
-
+#define PCTRL_GPIO_BSRR GPIOD_BSRR
 #define PCTRL_ENA	GPIO1		// Enable command output
 #define PCTRL_DDIR	GPIO5		// Data direction bit	
 #define PCTRL_LBUF	GPIO4		// Load buffer bit
@@ -93,6 +94,7 @@
 // Command register - 2 sets
 
 #define PCMD_GPIO	GPIOC		// Pertec command register
+#define PCMD_GPIO_BSRR  GPIOC_BSRR
 #define PCMD_BIT	0xff		// 8 bits
 #define PCMD_INIT	_OUT_PULLUP_SET	// see definitions below
 
@@ -112,6 +114,16 @@
 #define G_SET(x) gpio_set( x##_GPIO, x##_BIT)
 #define G_TOGGLE(x) gpio_toggle( x##_GPIO, x##_BIT)
 #define G_GETPIN(x) gpio_get( x##_GPIO, x##_BIT)
+
+//  Set GPIO register to a value.
+//
+//	x is the GPIO
+//	y is the value to set the GPIO to.
+//
+//  Note that this is done in a single cycle.
+//
+
+#define G_OUT(x,y) (x##_GPIO_BSRR = (x##_BIT << 16) | ((y) & x##_BIT))
 
 //  Input-output mode change.
 

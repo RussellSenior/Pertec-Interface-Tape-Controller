@@ -8,6 +8,7 @@ void ChangeDir( char *args[]);
 void MakeDir( char *args[]);
 void ShowFiles( char *args[]);
 void DeleteFile( char *args[]);
+void MoveFile( char *args[]);
 void SendFile( char *args[]);
 void GetFile( char *args[]);
 #endif

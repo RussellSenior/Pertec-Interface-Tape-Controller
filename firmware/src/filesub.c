@@ -208,6 +208,98 @@ void DeleteFile( char *args[])
   return;
 } // DeleteFile
 
+//*     MoveFile - Move or rename a file.
+//      --------------------------------
+//
+//      Requires 2 arguments.
+//
+
+void MoveFile( char *args[])
+{
+
+ FRESULT
+    fres;               // file result codes
+ FILINFO 
+    finfo;                // file information return
+  DIR
+    fdir;               // directory information structure
+  bool
+    dirTarget;          // if the target is directory and exists  
+  char
+    targetName[32];     // we should do something about this
+
+  if (!args[0] || !args[1])
+  {
+    Uprintf( "Need two arguments--from and to\n");
+    return;
+  }  // just exit
+
+//      The first argument must exist.
+
+  fres = f_findfirst( &fdir, &finfo, CurrentPath, args[0]);  // start searching
+  if ( fres != FR_OK)
+  { // find first didn't work
+    Uprintf( "Error  %d\n", fres);
+    return;
+  }
+  else 
+  {
+    if ( strlen( finfo.fname) == 0)
+    {
+      Uprintf( "File %s not found.\n", args[0]);
+      return;
+    }
+ } // check for first file
+  
+//  if the second argument exists and is a directory, we make note of it when
+//  creating target names.  Otherwise, the target item must not exist.  Rather 
+//  than doing an f_stat, it's easiest to do another findfirst.
+  
+  dirTarget = false;
+  fres = f_findfirst( &fdir, &finfo, CurrentPath, args[1]);  // start searching
+  if ( fres == FR_OK)
+  {
+    if ( strlen( finfo.fname) != 0)
+    {
+      if ( finfo.fattrib & AM_DIR )
+        dirTarget = true;               // moving to a directory
+      else
+      {
+        Uprintf( "Error - target %s already exists\n", args[1]);
+        return;
+      }
+    } // if something was returned
+  } // if find first okay
+  
+// okay, so now we can do a find on the first argment.  If we're not moving to
+// a directory, we quit with the first rename.
+
+  fres = f_findfirst( &fdir, &finfo, CurrentPath, args[0]);  // start searching
+  if ( !dirTarget)
+  { // simple rename
+    fres = f_rename( args[0], args[1]);
+    if (fres != FR_OK)
+      Uprintf( "Move/Rename failed.\n");
+    return;
+  } // check for first file
+
+//  It's a move to a directory, so we form a newname
+
+  do
+  {
+    strcpy( targetName, args[1]);
+    strcat( targetName, "/");
+    strcat( targetName, finfo.fname);  
+    fres = f_rename( finfo.fname, targetName);
+    if ( fres != FR_OK)
+      Uprintf( "Error move of %s to %s failed.\n", finfo.fname, targetName);
+    else
+      Uprintf( "Moved %s to %s\n", finfo.fname, targetName);
+    fres = f_findnext( &fdir, &finfo);
+  } while ( fres == FR_OK && finfo.fname[0]);  // while there are files
+  return;
+} // MoveFile
+
 //*	GetFile - Get File via YMODEM.
 //	------------------------------
 //

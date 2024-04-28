@@ -216,7 +216,7 @@ void CmdSetRetries( char *args[])
 
   if ( args[0])
   { // if present
-    if (isdigit(*args[0]))
+    if (isdigit((int) *args[0]))
     { // has to be numeric
       TapeRetries = *args[0] - '0';	// get the number
     }
@@ -239,7 +239,11 @@ void CmdSetStop( char *args[])
   if ( args[0])
   {
     StopAfterError = false;
-    StopTapemarks = atoi( args[0]);
+    if ( toupper( *args[0]) == 'V')
+      StopTapemarks = 'V';		// a cheat
+    else
+      StopTapemarks = atoi( args[0]);
+
     if ( StopTapemarks <= 0)
     {
       Uprintf( "Error - tape mark count must be positive.\n");
@@ -355,7 +359,8 @@ void CmdReadForward( char *args[])
   {
     Uprintf("%d bytes in block %d:\n", bytesRead, TapePosition);
     ShowBuffer( TapeBuffer, 
-      (bytesRead < BLOCK_DISPLAY_COUNT) ? bytesRead : BLOCK_DISPLAY_COUNT);
+      (bytesRead < BLOCK_DISPLAY_COUNT) ? bytesRead : BLOCK_DISPLAY_COUNT,
+      toupper(*args[0]) == 'E');  // note the EBCDIC switch
   }
   TapePosition++;
   Uprintf("\n");
@@ -640,8 +645,23 @@ void CmdCreateImage( char *args[])
       f_write( &tf, TapeBuffer, readCount, &wc);
       f_write( &tf, &tapeHeader, sizeof( tapeHeader), &wc);          
     }
-    
     AddRecordCount( readCount);
+
+    if ( StopTapemarks == 'V')
+    { // if stopping on EOV - ASCII or EBCDIC
+    
+      const uint8_t
+        stopASCII[3] = { 'E', 'O', 'V'},
+        stopEBCDIC[3] = { 0xc5, 0xd6, 0xe5 };
+    
+      if ( !memcmp( TapeBuffer, stopASCII, 3) ||
+           !memcmp( TapeBuffer, stopEBCDIC, 3) )
+      { // we see EOV 
+        Uprintf( "Hit EOV--ending\n");
+        break;
+      }	// EOV check
+    } // check for EOV stop
+
     if ( tapeMarkSeen == StopTapemarks)  
     {
       fileCount -= (StopTapemarks -1);

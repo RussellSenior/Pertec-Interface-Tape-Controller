@@ -22,6 +22,7 @@ typedef enum _sdioerrors_
   SD_ERR_BUSY
 } SD_ERROR;
 
+void SD_GPIO_Init(void);
 void SD_Reset(bool Power);
 SD_ERROR SD_Init(void);
 uint32_t SD_GetCardSize( void);

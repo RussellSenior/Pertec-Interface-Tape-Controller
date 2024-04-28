@@ -1,7 +1,7 @@
 #ifndef GLOBAL_H_DEFINED
 #define GLOBAL_H_DEFINED 1
 
-#define VERSION "0.99"
+#define VERSION "1.1"
 
 #ifndef MAIN
 #define SCOPE extern

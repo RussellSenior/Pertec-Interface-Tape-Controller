@@ -1,13 +1,7 @@
 #ifdef USE_UART
 
-//*  	UART Driver
-//  	-----------
-//
-//	If the USE_UART symbol is define at compilation, UART 1 will be
-//	used for the interface rather than USB CDC.   Note that serial
-//	debugging must not be used if this option is selected--there's
-//	too much conflict between the two.
-//
+//  UART Driver
+//  -----------
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -17,8 +11,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
-
-#include "license.h"
 
 #include "usbserial.h"
 

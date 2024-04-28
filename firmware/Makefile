@@ -6,7 +6,7 @@
 
 GCC_PREFIX=arm-none-eabi
 GCC_SIZE=arm-none-eabi-size
-OCM3DIR=../libopencm3
+OCM3DIR="../libopencm3-master"
 MCU=stm32-f407
 LDIR=$(OCM3DIR)/lib
 
@@ -19,9 +19,10 @@ BINDIR:=./bin
 
 #   Files.
 
-SRCS:= main.c cli.c dbserial.c sdiosubs.c uart.c \
- comm.c diskio.c ffunicode.c miscsubs.c tapedriver.c usbcdc.c \
+SRCS:= main.c cli.c dbserial.c sdiosubs.c uart.c usb.c \
+ comm.c diskio.c ffunicode.c miscsubs.c tapedriver.c \
  crc16.c ff.c filesub.c rtcsubs.c tapeutil.c ymodem.c
+
 OBJS:= $(addprefix $(OBJDIR)/,$(SRCS:.c=.o)) 
 SRCS:= $(addprefix $(SRCDIR)/,$(SRCS))
 
@@ -32,6 +33,10 @@ MAP=target.map
 CC=$(GCC_PREFIX)-gcc
 DEVICE=STM32F4
 FLOAT_OPT=-mfloat-abi=hard -mfpu=fpv4-sp-d16
+
+# Use the following to do serial I/O debug
+# F4DEFINES=-D SERIAL_DEBUG=1
+
 F4DEFINES=
 COMPILE_INC=-I$(OCM3DIR)/include -Iinc
 LINK_DIR=-L$(OCM3DIR)/lib

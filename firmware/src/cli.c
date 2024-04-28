@@ -44,6 +44,8 @@ static const COMMAND_LIST Commands[] =
  { "MKDIR",	"Make a directory",		MakeDir		},  // filesub
  { "PUT",	"Send YMODEM (file name)",	SendFile	},  // filesub
  { "GET",	"Get a remote file",		GetFile		},  // filesub
+ { "MOVE",      "Move,  rename (f1) (f2) file", MoveFile        },  // filesub
+
  { "STATUS",	"Show detailed tape status",	CmdShowStatus  	},  // tapeutil
  { "REWIND",	"Rewind tape",			CmdRewindTape	},  // tapeutil
  { "READ",    	
@@ -51,7 +53,8 @@ static const COMMAND_LIST Commands[] =
 
  { "WRITE",	
    "Write tape from <file> [N] = no rewind", 	CmdWriteImage	},  // tapeutil
- { "DUMP",	"Read and display tape block",	CmdReadForward  },  // tapeutil
+ { "DUMP",      "Read and display tape block [E] specifies EBCDIC",
+                                       	        CmdReadForward  },  // tapeutil
  { "INIT",	"Initialize tape interace",	CmdInitTape	},  // tapeutil
  { "ADDRESS",	
    "Set tape drive address 0-7",		CmdSetAddr	},  // tapeutil
@@ -61,7 +64,7 @@ static const COMMAND_LIST Commands[] =
     "Space tape n files (+=forward, -=backward)", CmdSpace	},  // tapeutil
  { "UNLOAD",	"Unload tape and go offline",	CmdUnloadTape   },  // tapeutil
  { "STOP",	
-   "Set stop: # of filemarks [E if error] ", 	CmdSetStop	},  // tapeutil
+   "Set stop: # of filemarks or V for EOV ", 	CmdSetStop	},  // tapeutil
  { "DEBUG",	"Set command register [value]",	CmdTapeDebug	},  // tapeutil
 
 // { "SETPE",	"Set 1600 PE mode",		CmdSet1600	},  // tapeutil
